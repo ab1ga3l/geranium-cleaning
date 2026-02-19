@@ -18,7 +18,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: '#b8c4c2' }}>
-              Professional seat cleaning services in Nairobi & Kiambu.
+              Professional seat cleaning services in Nairobi & the surroundings.
               Bringing freshness and care to every seat we touch.
             </p>
             <p className="mt-4 text-sm font-medium" style={{ color: '#f9c8c2' }}>
@@ -50,7 +50,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm" style={{ color: '#b8c4c2' }}>
                 <Phone size={16} style={{ color: '#f9c8c2' }} />
-                <a href="tel:+254726390610" className="hover:text-white transition-colors">+254 726 390610</a>
+                <a href="tel:+254768514443" className="hover:text-white transition-colors">+254 768 514443</a>
               </li>
               <li className="flex items-center gap-3 text-sm" style={{ color: '#b8c4c2' }}>
                 <Mail size={16} style={{ color: '#f9c8c2' }} />
@@ -60,7 +60,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-3 text-sm" style={{ color: '#b8c4c2' }}>
                 <MapPin size={16} className="mt-0.5 flex-shrink-0" style={{ color: '#f9c8c2' }} />
-                <span>Nairobi & Kiambu, Kenya</span>
+                <span>Nairobi, Kenya</span>
               </li>
             </ul>
           </div>

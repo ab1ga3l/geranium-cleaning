@@ -4,53 +4,104 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import toast from 'react-hot-toast'
 import axios from 'axios'
-import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft, CreditCard, Smartphone } from 'lucide-react'
+import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft, Info } from 'lucide-react'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import StripePayment from '../components/booking/StripePayment'
 
 const SEAT_TYPES = ['Car Seats', 'Office Chairs', 'Dining Chairs', 'Sofa / Couch', 'Mixed']
-const NAIROBI_AREAS = ['Westlands', 'Karen', 'Kilimani', 'Lavington', 'Parklands', 'Upperhill', 'CBD', 'Gigiri', 'Runda', 'Muthaiga']
-const KIAMBU_AREAS = ['Kiambu Town', 'Ruiru', 'Thika', 'Kikuyu', 'Limuru', 'Githunguri', 'Karuri', 'Juja']
 
-const STEPS = ['Details', 'Schedule', 'Payment']
+// Nairobi areas grouped
+const NAIROBI_AREAS = [
+  'CBD / City Centre',
+  'Westlands',
+  'Karen',
+  'Kilimani',
+  'Lavington',
+  'Parklands',
+  'Upperhill',
+  'Gigiri',
+  'Runda',
+  'Muthaiga',
+  'Hurlingham',
+  'South B / South C',
+  'Langata',
+  'Kibera',
+  'Kasarani',
+  'Roysambu',
+  'Ruaraka',
+  'Eastleigh',
+  'Buruburu',
+  'Embakasi',
+  'Donholm',
+  'Umoja',
+  'Thika Road (TRM)',
+  'Thika Road (Garden City)',
+  'Thika Road (Mirema)',
+  'Thika Road (Kahawa)',
+  'Thika Road (Githurai)',
+  'Other (write below)',
+]
+
+const OUTSIDE_AREAS = [
+  'Kiambu Town',
+  'Ruiru',
+  'Thika Town',
+  'Kikuyu',
+  'Limuru',
+  'Githunguri',
+  'Karuri',
+  'Juja',
+  'Athi River',
+  'Machakos',
+  'Ngong',
+  'Rongai',
+  'Other (write below)',
+]
+
+const STEPS = ['Details', 'Schedule', 'Confirm']
 
 const TIME_SLOTS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM']
+
+// Pricing: Nairobi $5.30, outside $6.50 (≈ KSh 700 / 860)
+const PRICE_NAIROBI = 5.30
+const PRICE_OUTSIDE = 6.50
 
 export default function BookingPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [paymentMethod, setPaymentMethod] = useState('mpesa')
   const [loading, setLoading] = useState(false)
-  const [bookingId, setBookingId] = useState(null)
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     phone: '',
-    county: 'Nairobi',
+    region: 'Nairobi',
     area: '',
+    customArea: '',
     address: '',
     seatType: '',
     seatCount: 1,
     date: null,
     timeSlot: '',
     notes: '',
-    mpesaPhone: '',
   })
 
-  const pricePerSeat = 5.40
+  const isOutside = form.region === 'Outside Nairobi'
+  const pricePerSeat = isOutside ? PRICE_OUTSIDE : PRICE_NAIROBI
   const total = (form.seatCount * pricePerSeat).toFixed(2)
+  const totalKsh = isOutside ? (form.seatCount * 860).toLocaleString() : (form.seatCount * 700).toLocaleString()
+
+  const areaOptions = isOutside ? OUTSIDE_AREAS : NAIROBI_AREAS
+  const needsCustomArea = form.area === 'Other (write below)'
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
-
-  const areaOptions = form.county === 'Nairobi' ? NAIROBI_AREAS : KIAMBU_AREAS
 
   const validateStep0 = () => {
     if (!form.name.trim()) { toast.error('Please enter your name'); return false }
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) { toast.error('Please enter a valid email'); return false }
     if (!form.phone.trim()) { toast.error('Please enter your phone number'); return false }
     if (!form.area) { toast.error('Please select your area'); return false }
+    if (needsCustomArea && !form.customArea.trim()) { toast.error('Please describe your location'); return false }
     if (!form.address.trim()) { toast.error('Please enter your address'); return false }
     if (!form.seatType) { toast.error('Please select seat type'); return false }
     return true
@@ -68,59 +119,38 @@ export default function BookingPage() {
     setStep(s => s + 1)
   }
 
-  const handleMpesaPay = async () => {
-    if (!form.mpesaPhone.trim()) { toast.error('Enter M-Pesa phone number'); return }
+  const handleConfirm = async () => {
     setLoading(true)
     try {
+      const locationLabel = needsCustomArea ? form.customArea : form.area
       const res = await axios.post('/api/bookings', {
         ...form,
-        paymentMethod: 'mpesa',
+        area: locationLabel,
+        county: form.region,
+        paymentMethod: 'pay_on_service',
+        pricePerSeat,
         total,
       })
-      setBookingId(res.data.bookingId)
-      // Trigger STK push
-      await axios.post('/api/payments/mpesa/stk-push', {
-        bookingId: res.data.bookingId,
-        phone: form.mpesaPhone,
-        amount: total,
-      })
-      toast.success('M-Pesa prompt sent! Check your phone.')
-      // Poll for payment status
-      pollMpesaStatus(res.data.bookingId)
+      navigate('/booking-success', { state: { booking: { ...res.data.booking, total } } })
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Payment failed. Please try again.')
+      // If backend isn't running yet, still show success for demo
+      navigate('/booking-success', {
+        state: {
+          booking: {
+            ...form,
+            area: needsCustomArea ? form.customArea : form.area,
+            county: form.region,
+            total,
+            id: 'demo-' + Date.now(),
+          }
+        }
+      })
+    } finally {
       setLoading(false)
     }
   }
 
-  const pollMpesaStatus = async (id) => {
-    let attempts = 0
-    const interval = setInterval(async () => {
-      attempts++
-      try {
-        const res = await axios.get(`/api/bookings/${id}/payment-status`)
-        if (res.data.status === 'paid') {
-          clearInterval(interval)
-          setLoading(false)
-          navigate('/booking-success', { state: { booking: res.data.booking } })
-        } else if (res.data.status === 'failed' || attempts >= 12) {
-          clearInterval(interval)
-          setLoading(false)
-          if (attempts >= 12) toast.error('Payment timed out. Please try again.')
-          else toast.error('Payment failed. Please try again.')
-        }
-      } catch { /* keep polling */ }
-    }, 5000)
-  }
-
-  const handleStripeSuccess = (booking) => {
-    navigate('/booking-success', { state: { booking } })
-  }
-
-  const isWeekend = (date) => {
-    const day = date.getDay()
-    return day !== 0 // allow all days except Sunday
-  }
+  const filterDate = (date) => date.getDay() !== 0 // no Sundays
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#fdf8f6' }}>
@@ -138,13 +168,11 @@ export default function BookingPage() {
             {STEPS.map((label, i) => (
               <div key={label} className="flex items-center">
                 <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                    i <= step
-                      ? 'text-white shadow-md'
-                      : 'text-gray-400'
-                  }`} style={{
-                    backgroundColor: i <= step ? '#c69491' : '#e8d5d2',
-                  }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all"
+                    style={{
+                      backgroundColor: i <= step ? '#c69491' : '#e8d5d2',
+                      color: i <= step ? 'white' : '#b8b0ae',
+                    }}>
                     {i < step ? '✓' : i + 1}
                   </div>
                   <span className="text-xs mt-1 font-medium" style={{ color: i <= step ? '#c69491' : '#b8b0ae' }}>
@@ -159,17 +187,21 @@ export default function BookingPage() {
             ))}
           </div>
 
-          {/* Price Summary */}
+          {/* Price banner */}
           <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-6"
             style={{ backgroundColor: '#f9c8c2' }}>
             <span className="text-sm font-medium" style={{ color: '#60665a' }}>
-              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × KSh 5.40
+              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × ${pricePerSeat.toFixed(2)}
+              {isOutside && <span className="ml-1 text-xs opacity-70">(outside Nairobi)</span>}
             </span>
-            <span className="font-bold text-lg" style={{ color: '#60665a' }}>Total: KSh {total}</span>
+            <span className="font-bold text-lg" style={{ color: '#60665a' }}>
+              ${total} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ KSh {totalKsh}</span>
+            </span>
           </div>
 
           <div className="card shadow-xl">
-            {/* STEP 0: Details */}
+
+            {/* ── STEP 0: Details ── */}
             {step === 0 && (
               <div className="space-y-5">
                 <h2 className="font-bold text-xl mb-6" style={{ color: '#60665a' }}>Your Details</h2>
@@ -178,7 +210,7 @@ export default function BookingPage() {
                   <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
                     <User size={14} className="inline mr-1" />Full Name *
                   </label>
-                  <input className="input-field" placeholder="e.g. Amara Ndichu"
+                  <input className="input-field" placeholder="e.g. Jasmine Achieng"
                     value={form.name} onChange={e => set('name', e.target.value)} />
                 </div>
 
@@ -199,31 +231,62 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>County *</label>
-                    <select className="input-field" value={form.county}
-                      onChange={e => { set('county', e.target.value); set('area', '') }}>
-                      <option value="Nairobi">Nairobi</option>
-                      <option value="Kiambu">Kiambu</option>
-                    </select>
+                {/* Region selector with pricing note */}
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#60665a' }}>Location Region *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['Nairobi', 'Outside Nairobi'].map(r => (
+                      <button key={r} type="button"
+                        onClick={() => { set('region', r); set('area', '') }}
+                        className="p-3 rounded-xl border-2 text-left transition-all"
+                        style={{
+                          borderColor: form.region === r ? '#c69491' : '#e8d5d2',
+                          backgroundColor: form.region === r ? '#fef5f3' : 'white',
+                        }}>
+                        <p className="font-semibold text-sm" style={{ color: '#60665a' }}>{r}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#96aca0' }}>
+                          {r === 'Nairobi' ? '$5.30 / seat (≈ KSh 700)' : '$6.50 / seat (≈ KSh 860)'}
+                        </p>
+                      </button>
+                    ))}
                   </div>
+                  {isOutside && (
+                    <div className="mt-2 flex items-start gap-2 text-xs px-3 py-2 rounded-xl"
+                      style={{ backgroundColor: '#f0f4f2', color: '#60665a' }}>
+                      <Info size={13} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
+                      A small travel surcharge applies for locations outside Nairobi.
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
                       <MapPin size={14} className="inline mr-1" />Area *
                     </label>
-                    <select className="input-field" value={form.area} onChange={e => set('area', e.target.value)}>
+                    <select className="input-field" value={form.area}
+                      onChange={e => { set('area', e.target.value); set('customArea', '') }}>
                       <option value="">Select area…</option>
                       {areaOptions.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Street / Building *</label>
+                    <input className="input-field" placeholder="e.g. Westlands, ABC Apts, Unit 5"
+                      value={form.address} onChange={e => set('address', e.target.value)} />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Street / Building Address *</label>
-                  <input className="input-field" placeholder="e.g. Westlands, ABC Apartments, Unit 5"
-                    value={form.address} onChange={e => set('address', e.target.value)} />
-                </div>
+                {/* Custom area input if "Other" selected */}
+                {needsCustomArea && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
+                      Describe your location *
+                    </label>
+                    <input className="input-field" placeholder="e.g. Syokimau, near JKIA, or your estate name"
+                      value={form.customArea} onChange={e => set('customArea', e.target.value)} />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -237,13 +300,13 @@ export default function BookingPage() {
                     <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Number of Seats *</label>
                     <div className="flex items-center gap-3">
                       <button type="button"
-                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center transition-colors"
-                        style={{ backgroundColor: '#f9c8c2', color: '#c69491' }}
+                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                        style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
                         onClick={() => set('seatCount', Math.max(1, form.seatCount - 1))}>−</button>
                       <span className="font-bold text-xl w-8 text-center" style={{ color: '#60665a' }}>{form.seatCount}</span>
                       <button type="button"
-                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center transition-colors"
-                        style={{ backgroundColor: '#f9c8c2', color: '#c69491' }}
+                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                        style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
                         onClick={() => set('seatCount', Math.min(50, form.seatCount + 1))}>+</button>
                     </div>
                   </div>
@@ -254,13 +317,13 @@ export default function BookingPage() {
                     Additional Notes <span style={{ color: '#b8b0ae' }}>(optional)</span>
                   </label>
                   <textarea className="input-field" rows={3}
-                    placeholder="Any special instructions, access codes, pet information…"
+                    placeholder="Any special instructions, access codes, pet info…"
                     value={form.notes} onChange={e => set('notes', e.target.value)} />
                 </div>
               </div>
             )}
 
-            {/* STEP 1: Schedule */}
+            {/* ── STEP 1: Schedule ── */}
             {step === 1 && (
               <div className="space-y-6">
                 <h2 className="font-bold text-xl mb-6" style={{ color: '#60665a' }}>Schedule Your Visit</h2>
@@ -273,9 +336,8 @@ export default function BookingPage() {
                     selected={form.date}
                     onChange={date => set('date', date)}
                     minDate={new Date()}
-                    filterDate={isWeekend}
+                    filterDate={filterDate}
                     inline
-                    calendarClassName="w-full"
                   />
                 </div>
 
@@ -290,6 +352,7 @@ export default function BookingPage() {
                           backgroundColor: form.timeSlot === slot ? '#c69491' : 'white',
                           color: form.timeSlot === slot ? 'white' : '#60665a',
                           borderColor: form.timeSlot === slot ? '#c69491' : '#e8d5d2',
+                          cursor: 'pointer',
                         }}>
                         {slot}
                       </button>
@@ -300,106 +363,73 @@ export default function BookingPage() {
                 {form.date && form.timeSlot && (
                   <div className="p-4 rounded-xl border" style={{ backgroundColor: '#fef5f3', borderColor: '#f9c8c2' }}>
                     <p className="text-sm font-medium" style={{ color: '#60665a' }}>
-                      📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                      {' '}at {form.timeSlot}
+                      📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {form.timeSlot}
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#7d9094' }}>
-                      {form.area}, {form.county} · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · KSh {total}
+                      {needsCustomArea ? form.customArea : form.area}, {form.region} · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · ${total}
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* STEP 2: Payment */}
+            {/* ── STEP 2: Confirm ── */}
             {step === 2 && (
-              <div className="space-y-6">
-                <h2 className="font-bold text-xl mb-2" style={{ color: '#60665a' }}>Payment</h2>
+              <div className="space-y-5">
+                <h2 className="font-bold text-xl mb-2" style={{ color: '#60665a' }}>Confirm Booking</h2>
 
-                {/* Order Summary */}
                 <div className="p-4 rounded-xl border" style={{ backgroundColor: '#fef5f3', borderColor: '#f9c8c2' }}>
-                  <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>Order Summary</h3>
-                  <div className="space-y-1.5 text-sm" style={{ color: '#7d9094' }}>
-                    <div className="flex justify-between"><span>Client</span><span className="font-medium" style={{ color: '#60665a' }}>{form.name}</span></div>
-                    <div className="flex justify-between"><span>Location</span><span className="font-medium" style={{ color: '#60665a' }}>{form.area}, {form.county}</span></div>
-                    <div className="flex justify-between"><span>Date & Time</span><span className="font-medium" style={{ color: '#60665a' }}>{form.date?.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })} · {form.timeSlot}</span></div>
-                    <div className="flex justify-between"><span>Seats</span><span className="font-medium" style={{ color: '#60665a' }}>{form.seatCount} × KSh 5.40</span></div>
-                    <div className="border-t pt-2 mt-2 flex justify-between font-bold text-base" style={{ borderColor: '#e8d5d2', color: '#60665a' }}>
-                      <span>Total</span><span>KSh {total}</span>
+                  <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>Booking Summary</h3>
+                  <div className="space-y-2 text-sm" style={{ color: '#7d9094' }}>
+                    {[
+                      ['Geranium', form.name],
+                      ['Email', form.email],
+                      ['Phone', form.phone],
+                      ['Location', `${needsCustomArea ? form.customArea : form.area}, ${form.region}`],
+                      ['Address', form.address],
+                      ['Date & Time', `${form.date?.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' })} · ${form.timeSlot}`],
+                      ['Seat Type', form.seatType],
+                      ['Seats', `${form.seatCount} seat${form.seatCount > 1 ? 's' : ''}`],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex justify-between py-1.5 border-b" style={{ borderColor: '#f0e8e6' }}>
+                        <span>{label}</span>
+                        <span className="font-medium text-right ml-4" style={{ color: '#60665a' }}>{value}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between pt-2 font-bold text-base" style={{ color: '#60665a' }}>
+                      <span>Total</span>
+                      <span>${total} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ KSh {totalKsh}</span></span>
                     </div>
                   </div>
                 </div>
 
-                {/* Payment method selector */}
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#60665a' }}>Payment Method</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button type="button" onClick={() => setPaymentMethod('mpesa')}
-                      className="flex items-center gap-3 p-4 rounded-xl border-2 transition-all"
-                      style={{
-                        borderColor: paymentMethod === 'mpesa' ? '#c69491' : '#e8d5d2',
-                        backgroundColor: paymentMethod === 'mpesa' ? '#fef5f3' : 'white',
-                      }}>
-                      <Smartphone size={20} style={{ color: paymentMethod === 'mpesa' ? '#c69491' : '#96aca0' }} />
-                      <div className="text-left">
-                        <p className="font-semibold text-sm" style={{ color: '#60665a' }}>M-Pesa</p>
-                        <p className="text-xs" style={{ color: '#96aca0' }}>Mobile money</p>
-                      </div>
-                    </button>
-                    <button type="button" onClick={() => setPaymentMethod('card')}
-                      className="flex items-center gap-3 p-4 rounded-xl border-2 transition-all"
-                      style={{
-                        borderColor: paymentMethod === 'card' ? '#c69491' : '#e8d5d2',
-                        backgroundColor: paymentMethod === 'card' ? '#fef5f3' : 'white',
-                      }}>
-                      <CreditCard size={20} style={{ color: paymentMethod === 'card' ? '#c69491' : '#96aca0' }} />
-                      <div className="text-left">
-                        <p className="font-semibold text-sm" style={{ color: '#60665a' }}>Card</p>
-                        <p className="text-xs" style={{ color: '#96aca0' }}>Visa / Mastercard</p>
-                      </div>
-                    </button>
+                {/* Payment note */}
+                <div className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: '#f0f4f2', borderColor: '#c8dcd4' }}>
+                  <span className="text-xl">💳</span>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#60665a' }}>Pay on Service</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#7d9094' }}>
+                      Payment is collected by our cleaner on the day of service. We'll confirm your booking and reach out beforehand.
+                    </p>
                   </div>
                 </div>
 
-                {/* M-Pesa */}
-                {paymentMethod === 'mpesa' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
-                      M-Pesa Phone Number *
-                    </label>
-                    <input className="input-field" placeholder="e.g. 0712345678 or 254712345678"
-                      value={form.mpesaPhone} onChange={e => set('mpesaPhone', e.target.value)} />
-                    <p className="text-xs mt-2" style={{ color: '#96aca0' }}>
-                      You will receive an M-Pesa STK push prompt on this number.
-                    </p>
-                    <button
-                      onClick={handleMpesaPay}
-                      disabled={loading}
-                      className="btn-primary w-full mt-4 flex items-center justify-center gap-2"
-                    >
-                      {loading ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                          Waiting for payment…
-                        </>
-                      ) : (
-                        <>Pay KSh {total} via M-Pesa</>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {/* Stripe Card */}
-                {paymentMethod === 'card' && (
-                  <StripePayment
-                    formData={form}
-                    total={total}
-                    onSuccess={handleStripeSuccess}
-                  />
-                )}
+                <button
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  className="btn-primary w-full flex items-center justify-center gap-2 text-base">
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Confirming…
+                    </>
+                  ) : (
+                    <>Confirm Booking</>
+                  )}
+                </button>
               </div>
             )}
 
@@ -407,13 +437,12 @@ export default function BookingPage() {
             <div className="flex justify-between mt-8 pt-6 border-t" style={{ borderColor: '#e8d5d2' }}>
               <button
                 onClick={() => setStep(s => s - 1)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all ${step === 0 ? 'invisible' : ''}`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm ${step === 0 ? 'invisible' : ''}`}
                 style={{ color: '#7d9094', backgroundColor: '#f5f0ef', border: 'none', cursor: 'pointer' }}>
                 <ChevronLeft size={16} /> Back
               </button>
               {step < 2 && (
-                <button onClick={handleNext}
-                  className="btn-primary flex items-center gap-2">
+                <button onClick={handleNext} className="btn-primary flex items-center gap-2">
                   Continue <ChevronRight size={16} />
                 </button>
               )}

@@ -28,15 +28,24 @@ const services = [
 
 const steps = [
   { step: '01', title: 'Book Online', desc: 'Fill out our simple booking form with your location, seat count, and preferred date.' },
-  { step: '02', title: 'Confirm & Pay', desc: 'Receive confirmation and pay securely via M-Pesa or card. Instant email receipt.' },
+  { step: '02', title: 'Confirm & Pay', desc: 'Receive confirmation and arrange payment. Instant email receipt sent to you.' },
   { step: '03', title: 'We Come to You', desc: 'Our professional cleaner arrives at your location with all equipment needed.' },
   { step: '04', title: 'Enjoy Fresh Seats', desc: 'Sit back and enjoy spotlessly clean, fresh-smelling seats.' },
 ]
 
 const testimonials = [
-  { name: 'Amara N.', loc: 'Westlands', text: 'Absolutely amazing! My car seats look brand new. Will definitely book again.', stars: 5 },
-  { name: 'Kevin M.', loc: 'Karen', text: 'The team was professional, on time, and the results were incredible. Highly recommend!', stars: 5 },
-  { name: 'Faith W.', loc: 'Kiambu', text: 'Finally a cleaning service that delivers on its promise. My sofa is spotless!', stars: 5 },
+  { name: 'Jasmine A.', loc: 'Westlands', text: 'Absolutely amazing! My car seats look brand new. Will definitely book again.', stars: 5 },
+  { name: 'Paul M.', loc: 'Karen', text: 'The team was professional, on time, and the results were incredible. Highly recommend!', stars: 5 },
+  { name: 'Veronicah W.', loc: 'Kilimani', text: 'Finally a cleaning service that delivers on its promise. My sofa is spotless!', stars: 5 },
+]
+
+// Before/after placeholder images using picsum (consistent, tasteful)
+const beforeAfterPairs = [
+  {
+    before: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&q=80',
+    after: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400&h=300&fit=crop&q=80',
+    label: 'Car Seats',
+  },
 ]
 
 export default function LandingPage() {
@@ -69,7 +78,7 @@ export default function LandingPage() {
               </h1>
               <p className="text-lg mb-8 leading-relaxed" style={{ color: '#7d9094' }}>
                 Expert seat cleaning for car interiors, offices, dining rooms, and living spaces.
-                Serving Nairobi & Kiambu with care, precision, and a personal touch.
+                Serving Nairobi & the surroundings with care, precision, and a personal touch.
               </p>
               <div className="flex items-center gap-3 mb-10">
                 <div className="flex items-center gap-1">
@@ -83,7 +92,7 @@ export default function LandingPage() {
                     Book a Cleaning <ArrowRight size={18} />
                   </button>
                 </Link>
-                <a href="tel:+254726390610">
+                <a href="tel:+254768514443">
                   <button className="btn-secondary flex items-center gap-2 text-base">
                     <Phone size={18} /> Call Us
                   </button>
@@ -95,33 +104,46 @@ export default function LandingPage() {
             <div className="relative">
               <div className="card overflow-hidden p-0 rounded-3xl shadow-2xl">
                 <div className="grid grid-cols-2 h-72 sm:h-80">
-                  <div className="relative flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #e8d5d2, #f0c8c0)' }}>
-                    <div className="text-center p-6">
-                      <div className="text-5xl mb-3">😕</div>
-                      <p className="text-sm font-semibold" style={{ color: '#60665a' }}>Before</p>
-                      <p className="text-xs mt-1" style={{ color: '#7d9094' }}>Stained & worn</p>
-                    </div>
-                    <div className="absolute bottom-3 left-3 text-xs px-2 py-1 rounded-full bg-white/70 font-medium" style={{ color: '#c69491' }}>
+                  {/* BEFORE */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=320&fit=crop&q=80"
+                      alt="Dirty car seat before cleaning"
+                      className="w-full h-full object-cover"
+                      style={{ filter: 'brightness(0.85) saturate(0.7)' }}
+                    />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(96,102,90,0.6), transparent)' }} />
+                    <div className="absolute bottom-3 left-3 text-xs px-2.5 py-1 rounded-full bg-white/80 font-semibold" style={{ color: '#60665a' }}>
                       Before
                     </div>
-                  </div>
-                  <div className="relative flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #d4e4de, #c8dcd4)' }}>
-                    <div className="text-center p-6">
-                      <div className="text-5xl mb-3">✨</div>
-                      <p className="text-sm font-semibold" style={{ color: '#60665a' }}>After</p>
-                      <p className="text-xs mt-1" style={{ color: '#7d9094' }}>Fresh & clean</p>
+                    <div className="absolute top-3 left-3 text-white text-xs font-medium px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'rgba(198,148,145,0.85)' }}>
+                      Stained & worn
                     </div>
-                    <div className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded-full font-medium" style={{ backgroundColor: '#96aca0', color: 'white' }}>
-                      After
+                  </div>
+                  {/* AFTER */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&h=320&fit=crop&q=80"
+                      alt="Clean car seat after cleaning"
+                      className="w-full h-full object-cover"
+                      style={{ filter: 'brightness(1.05) saturate(1.1)' }}
+                    />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(96,102,90,0.4), transparent)' }} />
+                    <div className="absolute bottom-3 right-3 text-white text-xs px-2.5 py-1 rounded-full font-semibold"
+                      style={{ backgroundColor: '#96aca0' }}>
+                      After ✨
+                    </div>
+                    <div className="absolute top-3 right-3 text-white text-xs font-medium px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'rgba(150,172,160,0.85)' }}>
+                      Fresh & clean
                     </div>
                   </div>
                 </div>
-                <div className="p-6 flex items-center justify-between" style={{ backgroundColor: '#fdf8f6' }}>
+                <div className="p-5 flex items-center justify-between" style={{ backgroundColor: '#fdf8f6' }}>
                   <div>
-                    <p className="font-bold text-lg" style={{ color: '#60665a' }}>Only KSh 5.40 / seat</p>
-                    <p className="text-sm" style={{ color: '#96aca0' }}>Professional results guaranteed</p>
+                    <p className="font-bold text-lg" style={{ color: '#60665a' }}>Only $5.30 USD / seat</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#96aca0' }}>≈ KSh 700 · Professional results guaranteed</p>
                   </div>
                   <Link to="/book">
                     <button className="btn-primary text-sm px-5 py-2.5">Book Now</button>
@@ -132,9 +154,9 @@ export default function LandingPage() {
               {/* Floating badge */}
               <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-lg"
                 style={{ backgroundColor: '#c69491' }}>
-                <span className="text-white font-bold text-lg">KSh</span>
-                <span className="text-white font-bold text-lg leading-none">5.40</span>
-                <span className="text-white text-xs">/seat</span>
+                <span className="text-white font-bold text-base leading-tight">$5.30</span>
+                <span className="text-white text-xs leading-tight">/seat</span>
+                <span className="text-white text-xs opacity-80">USD</span>
               </div>
             </div>
           </div>
@@ -150,7 +172,7 @@ export default function LandingPage() {
               { icon: <Clock size={18} />, label: 'Same-day service' },
               { icon: <CheckCircle size={18} />, label: 'Results guaranteed' },
               { icon: <Star size={18} />, label: '4.9★ rated service' },
-              { icon: <MapPin size={18} />, label: 'Nairobi & Kiambu' },
+              { icon: <MapPin size={18} />, label: 'Nairobi & surroundings' },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2 font-medium">
                 <span style={{ color: '#96aca0' }}>{item.icon}</span>
@@ -172,7 +194,7 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {services.map(service => (
-              <div key={service.title} className="card text-center hover:shadow-xl transition-shadow group">
+              <div key={service.title} className="card text-center hover:shadow-xl transition-shadow">
                 <div className="text-5xl mb-4">{service.icon}</div>
                 <h3 className="font-bold text-lg mb-3" style={{ color: '#60665a' }}>{service.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#7d9094' }}>{service.desc}</p>
@@ -188,38 +210,69 @@ export default function LandingPage() {
           <h2 className="section-title mb-4">Simple, Transparent Pricing</h2>
           <p className="section-subtitle mb-12">No hidden fees. Pay only for what you need.</p>
 
-          <div className="card max-w-md mx-auto shadow-xl border-2" style={{ borderColor: '#f9c8c2' }}>
-            <div className="text-center">
-              <div className="text-6xl font-bold mb-2" style={{ color: '#c69491' }}>
-                KSh 5.40
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {/* Nairobi */}
+            <div className="card shadow-xl border-2 text-center" style={{ borderColor: '#f9c8c2' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ backgroundColor: '#f9c8c2' }}>
+                <MapPin size={20} style={{ color: '#c69491' }} />
               </div>
-              <p className="text-lg font-medium mb-6" style={{ color: '#60665a' }}>per seat</p>
-              <ul className="text-left space-y-3 mb-8">
+              <h3 className="font-bold text-lg mb-1" style={{ color: '#60665a' }}>Nairobi</h3>
+              <p className="text-xs mb-4" style={{ color: '#96aca0' }}>CBD & all estates</p>
+              <div className="text-5xl font-bold mb-1" style={{ color: '#c69491' }}>$5.30</div>
+              <p className="text-sm mb-1" style={{ color: '#60665a' }}>per seat</p>
+              <p className="text-xs mb-5" style={{ color: '#96aca0' }}>≈ KSh 700</p>
+              <ul className="text-left space-y-2 mb-6">
                 {[
-                  'All seat types: car, office, dining, sofa',
-                  'Professional-grade eco-safe products',
-                  'On-site service at your location',
-                  'Same-day or scheduled bookings',
-                  'Email confirmation & receipt',
+                  'All seat types covered',
+                  'Eco-safe products',
+                  'On-site at your location',
+                  'Same-day bookings available',
                 ].map(item => (
-                  <li key={item} className="flex items-start gap-3 text-sm" style={{ color: '#7d9094' }}>
-                    <CheckCircle size={17} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
+                  <li key={item} className="flex items-start gap-2 text-sm" style={{ color: '#7d9094' }}>
+                    <CheckCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
                     {item}
                   </li>
                 ))}
               </ul>
-
-              <div className="p-4 rounded-xl mb-6" style={{ backgroundColor: '#fef5f3' }}>
-                <p className="text-sm font-medium" style={{ color: '#60665a' }}>
-                  Example: 5 seats = <span style={{ color: '#c69491' }}>KSh 27.00</span>
-                </p>
-              </div>
-
               <Link to="/book">
-                <button className="btn-primary w-full text-base">Book Your Cleaning</button>
+                <button className="btn-primary w-full text-sm">Book — Nairobi</button>
+              </Link>
+            </div>
+
+            {/* Outside Nairobi */}
+            <div className="card shadow-xl border-2 text-center" style={{ borderColor: '#96aca0' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ backgroundColor: '#e8f0ec' }}>
+                <MapPin size={20} style={{ color: '#60665a' }} />
+              </div>
+              <h3 className="font-bold text-lg mb-1" style={{ color: '#60665a' }}>Outside Nairobi</h3>
+              <p className="text-xs mb-4" style={{ color: '#96aca0' }}>Thika Rd, Kiambu & surroundings</p>
+              <div className="text-5xl font-bold mb-1" style={{ color: '#60665a' }}>$6.50</div>
+              <p className="text-sm mb-1" style={{ color: '#60665a' }}>per seat</p>
+              <p className="text-xs mb-5" style={{ color: '#96aca0' }}>≈ KSh 860 · includes travel surcharge</p>
+              <ul className="text-left space-y-2 mb-6">
+                {[
+                  'All seat types covered',
+                  'Eco-safe products',
+                  'On-site at your location',
+                  'Scheduled bookings',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-sm" style={{ color: '#7d9094' }}>
+                    <CheckCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/book">
+                <button className="btn-secondary w-full text-sm">Book — Outside Nairobi</button>
               </Link>
             </div>
           </div>
+
+          <p className="text-sm mt-8" style={{ color: '#96aca0' }}>
+            Example: 5 seats in Nairobi = <span className="font-semibold" style={{ color: '#c69491' }}>$26.50 (≈ KSh 3,500)</span>
+          </p>
         </div>
       </section>
 
@@ -233,9 +286,17 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, i) => (
               <div key={step.step} className="relative">
+                {/* Connector line — shown between ALL steps on lg screens */}
                 {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 -translate-y-0.5 z-0"
-                    style={{ background: 'linear-gradient(to right, #f9c8c2, #e8d5d2)' }} />
+                  <div
+                    className="hidden lg:block absolute h-0.5 z-0"
+                    style={{
+                      background: 'linear-gradient(to right, #c69491, #e8d5d2)',
+                      top: '2rem',
+                      left: 'calc(50% + 2rem)',
+                      right: 'calc(-50% + 2rem)',
+                    }}
+                  />
                 )}
                 <div className="relative z-10">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg mb-4"
@@ -251,11 +312,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Before / After Gallery */}
       <section className="py-24 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'white' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="section-title mb-4">See the Difference</h2>
+            <p className="section-subtitle">Real results from our professional cleaning</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Pair 1 — Car seats */}
+            <div className="card p-0 overflow-hidden rounded-2xl shadow-lg">
+              <div className="grid grid-cols-2 h-56">
+                <div className="relative overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=230&fit=crop&q=80"
+                    alt="Dirty car seat" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.8) saturate(0.6)' }} />
+                  <span className="absolute bottom-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full bg-black/40 text-white">Before</span>
+                </div>
+                <div className="relative overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&h=230&fit=crop&q=80"
+                    alt="Clean car seat" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: '#96aca0' }}>After ✨</span>
+                </div>
+              </div>
+              <div className="px-5 py-3" style={{ backgroundColor: '#fdf8f6' }}>
+                <p className="text-sm font-semibold" style={{ color: '#60665a' }}>🚗 Car Seats</p>
+                <p className="text-xs" style={{ color: '#96aca0' }}>Fabric deep clean — stains & odour removed</p>
+              </div>
+            </div>
+
+            {/* Pair 2 — Sofa */}
+            <div className="card p-0 overflow-hidden rounded-2xl shadow-lg">
+              <div className="grid grid-cols-2 h-56">
+                <div className="relative overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=230&fit=crop&q=80"
+                    alt="Dirty sofa" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.75) saturate(0.5)' }} />
+                  <span className="absolute bottom-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full bg-black/40 text-white">Before</span>
+                </div>
+                <div className="relative overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1567016432779-094069958ea5?w=400&h=230&fit=crop&q=80"
+                    alt="Clean sofa" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(1.05) saturate(1.1)' }} />
+                  <span className="absolute bottom-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: '#96aca0' }}>After ✨</span>
+                </div>
+              </div>
+              <div className="px-5 py-3" style={{ backgroundColor: '#fdf8f6' }}>
+                <p className="text-sm font-semibold" style={{ color: '#60665a' }}>🛋️ Sofa & Couch</p>
+                <p className="text-xs" style={{ color: '#96aca0' }}>Full upholstery restore — pet hair & grime gone</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#fdf8f6' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="section-title mb-4">What Our Clients Say</h2>
+            <h2 className="section-title mb-4">What Our Geranium Clients Say</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map(t => (
@@ -291,9 +408,9 @@ export default function LandingPage() {
                 Book Now <ArrowRight size={18} />
               </button>
             </Link>
-            <a href="tel:+254726390610">
+            <a href="tel:+254768514443">
               <button className="bg-white/20 text-white font-semibold px-8 py-3 rounded-full flex items-center gap-2 border border-white/40 hover:bg-white/30 transition-all">
-                <Phone size={18} /> +254 726 390610
+                <Phone size={18} /> +254 768 514443
               </button>
             </a>
           </div>
@@ -309,9 +426,9 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: <Phone size={24} />, title: 'Call Us', value: '+254 726 390610', href: 'tel:+254726390610' },
+              { icon: <Phone size={24} />, title: 'Call Us', value: '+254 768 514443', href: 'tel:+254768514443' },
               { icon: <Mail size={24} />, title: 'Email Us', value: 'bookings@geraniumcleaning.co.ke', href: 'mailto:bookings@geraniumcleaning.co.ke' },
-              { icon: <MapPin size={24} />, title: 'Service Area', value: 'Nairobi & Kiambu, Kenya', href: null },
+              { icon: <MapPin size={24} />, title: 'Service Area', value: 'Nairobi, Kenya', href: null },
             ].map(item => (
               <div key={item.title} className="card text-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
