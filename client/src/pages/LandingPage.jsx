@@ -210,69 +210,33 @@ export default function LandingPage() {
           <h2 className="section-title mb-4">Simple, Transparent Pricing</h2>
           <p className="section-subtitle mb-12">No hidden fees. Pay only for what you need.</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {/* Nairobi */}
-            <div className="card shadow-xl border-2 text-center" style={{ borderColor: '#f9c8c2' }}>
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
-                style={{ backgroundColor: '#f9c8c2' }}>
-                <MapPin size={20} style={{ color: '#c69491' }} />
-              </div>
-              <h3 className="font-bold text-lg mb-1" style={{ color: '#60665a' }}>Nairobi</h3>
-              <p className="text-xs mb-4" style={{ color: '#96aca0' }}>CBD & all estates</p>
-              <div className="text-5xl font-bold mb-1" style={{ color: '#c69491' }}>$5.30</div>
-              <p className="text-sm mb-1" style={{ color: '#60665a' }}>per seat</p>
-              <p className="text-xs mb-5" style={{ color: '#96aca0' }}>≈ KSh 700</p>
-              <ul className="text-left space-y-2 mb-6">
-                {[
-                  'All seat types covered',
-                  'Eco-safe products',
-                  'On-site at your location',
-                  'Same-day bookings available',
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2 text-sm" style={{ color: '#7d9094' }}>
-                    <CheckCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/book">
-                <button className="btn-primary w-full text-sm">Book — Nairobi</button>
-              </Link>
+          <div className="card max-w-md mx-auto shadow-xl border-2 text-center" style={{ borderColor: '#f9c8c2' }}>
+            <div className="text-6xl font-bold mb-2" style={{ color: '#c69491' }}>$5.30</div>
+            <p className="text-lg font-medium mb-1" style={{ color: '#60665a' }}>per seat</p>
+            <p className="text-sm mb-6" style={{ color: '#96aca0' }}>≈ KSh 700</p>
+            <ul className="text-left space-y-3 mb-8">
+              {[
+                'All seat types: car, office, dining, sofa',
+                'Professional-grade eco-safe products',
+                'On-site service at your location',
+                'Same-day or scheduled bookings',
+                'Email confirmation & receipt',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-3 text-sm" style={{ color: '#7d9094' }}>
+                  <CheckCircle size={17} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="p-4 rounded-xl mb-6" style={{ backgroundColor: '#fef5f3' }}>
+              <p className="text-sm font-medium" style={{ color: '#60665a' }}>
+                Example: 5 seats = <span style={{ color: '#c69491' }}>$26.50 (≈ KSh 3,500)</span>
+              </p>
             </div>
-
-            {/* Outside Nairobi */}
-            <div className="card shadow-xl border-2 text-center" style={{ borderColor: '#96aca0' }}>
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
-                style={{ backgroundColor: '#e8f0ec' }}>
-                <MapPin size={20} style={{ color: '#60665a' }} />
-              </div>
-              <h3 className="font-bold text-lg mb-1" style={{ color: '#60665a' }}>Outside Nairobi</h3>
-              <p className="text-xs mb-4" style={{ color: '#96aca0' }}>Thika Rd, Kiambu & surroundings</p>
-              <div className="text-5xl font-bold mb-1" style={{ color: '#60665a' }}>$6.50</div>
-              <p className="text-sm mb-1" style={{ color: '#60665a' }}>per seat</p>
-              <p className="text-xs mb-5" style={{ color: '#96aca0' }}>≈ KSh 860 · includes travel surcharge</p>
-              <ul className="text-left space-y-2 mb-6">
-                {[
-                  'All seat types covered',
-                  'Eco-safe products',
-                  'On-site at your location',
-                  'Scheduled bookings',
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2 text-sm" style={{ color: '#7d9094' }}>
-                    <CheckCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/book">
-                <button className="btn-secondary w-full text-sm">Book — Outside Nairobi</button>
-              </Link>
-            </div>
+            <Link to="/book">
+              <button className="btn-primary w-full text-base">Book Your Cleaning</button>
+            </Link>
           </div>
-
-          <p className="text-sm mt-8" style={{ color: '#96aca0' }}>
-            Example: 5 seats in Nairobi = <span className="font-semibold" style={{ color: '#c69491' }}>$26.50 (≈ KSh 3,500)</span>
-          </p>
         </div>
       </section>
 

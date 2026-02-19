@@ -4,7 +4,7 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import toast from 'react-hot-toast'
 import axios from 'axios'
-import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft, Info } from 'lucide-react'
+import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft } from 'lucide-react'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 
@@ -42,29 +42,11 @@ const NAIROBI_AREAS = [
   'Other (write below)',
 ]
 
-const OUTSIDE_AREAS = [
-  'Kiambu Town',
-  'Ruiru',
-  'Thika Town',
-  'Kikuyu',
-  'Limuru',
-  'Githunguri',
-  'Karuri',
-  'Juja',
-  'Athi River',
-  'Machakos',
-  'Ngong',
-  'Rongai',
-  'Other (write below)',
-]
-
 const STEPS = ['Details', 'Schedule', 'Confirm']
 
 const TIME_SLOTS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM']
 
-// Pricing: Nairobi $5.30, outside $6.50 (≈ KSh 700 / 860)
-const PRICE_NAIROBI = 5.30
-const PRICE_OUTSIDE = 6.50
+const PRICE_PER_SEAT = 5.30
 
 export default function BookingPage() {
   const navigate = useNavigate()
@@ -75,7 +57,6 @@ export default function BookingPage() {
     name: '',
     email: '',
     phone: '',
-    region: 'Nairobi',
     area: '',
     customArea: '',
     address: '',
@@ -86,12 +67,8 @@ export default function BookingPage() {
     notes: '',
   })
 
-  const isOutside = form.region === 'Outside Nairobi'
-  const pricePerSeat = isOutside ? PRICE_OUTSIDE : PRICE_NAIROBI
-  const total = (form.seatCount * pricePerSeat).toFixed(2)
-  const totalKsh = isOutside ? (form.seatCount * 860).toLocaleString() : (form.seatCount * 700).toLocaleString()
-
-  const areaOptions = isOutside ? OUTSIDE_AREAS : NAIROBI_AREAS
+  const total = (form.seatCount * PRICE_PER_SEAT).toFixed(2)
+  const totalKsh = (form.seatCount * 700).toLocaleString()
   const needsCustomArea = form.area === 'Other (write below)'
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
@@ -126,20 +103,19 @@ export default function BookingPage() {
       const res = await axios.post('/api/bookings', {
         ...form,
         area: locationLabel,
-        county: form.region,
+        county: 'Nairobi',
         paymentMethod: 'pay_on_service',
-        pricePerSeat,
+        pricePerSeat: PRICE_PER_SEAT,
         total,
       })
       navigate('/booking-success', { state: { booking: { ...res.data.booking, total } } })
     } catch (err) {
-      // If backend isn't running yet, still show success for demo
       navigate('/booking-success', {
         state: {
           booking: {
             ...form,
             area: needsCustomArea ? form.customArea : form.area,
-            county: form.region,
+            county: 'Nairobi',
             total,
             id: 'demo-' + Date.now(),
           }
@@ -191,8 +167,7 @@ export default function BookingPage() {
           <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-6"
             style={{ backgroundColor: '#f9c8c2' }}>
             <span className="text-sm font-medium" style={{ color: '#60665a' }}>
-              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × ${pricePerSeat.toFixed(2)}
-              {isOutside && <span className="ml-1 text-xs opacity-70">(outside Nairobi)</span>}
+              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × $5.30
             </span>
             <span className="font-bold text-lg" style={{ color: '#60665a' }}>
               ${total} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ KSh {totalKsh}</span>
@@ -231,34 +206,6 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Region selector with pricing note */}
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#60665a' }}>Location Region *</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['Nairobi', 'Outside Nairobi'].map(r => (
-                      <button key={r} type="button"
-                        onClick={() => { set('region', r); set('area', '') }}
-                        className="p-3 rounded-xl border-2 text-left transition-all"
-                        style={{
-                          borderColor: form.region === r ? '#c69491' : '#e8d5d2',
-                          backgroundColor: form.region === r ? '#fef5f3' : 'white',
-                        }}>
-                        <p className="font-semibold text-sm" style={{ color: '#60665a' }}>{r}</p>
-                        <p className="text-xs mt-0.5" style={{ color: '#96aca0' }}>
-                          {r === 'Nairobi' ? '$5.30 / seat (≈ KSh 700)' : '$6.50 / seat (≈ KSh 860)'}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                  {isOutside && (
-                    <div className="mt-2 flex items-start gap-2 text-xs px-3 py-2 rounded-xl"
-                      style={{ backgroundColor: '#f0f4f2', color: '#60665a' }}>
-                      <Info size={13} className="mt-0.5 flex-shrink-0" style={{ color: '#96aca0' }} />
-                      A small travel surcharge applies for locations outside Nairobi.
-                    </div>
-                  )}
-                </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
@@ -267,7 +214,7 @@ export default function BookingPage() {
                     <select className="input-field" value={form.area}
                       onChange={e => { set('area', e.target.value); set('customArea', '') }}>
                       <option value="">Select area…</option>
-                      {areaOptions.map(a => <option key={a} value={a}>{a}</option>)}
+                      {NAIROBI_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                   </div>
                   <div>
@@ -366,7 +313,7 @@ export default function BookingPage() {
                       📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {form.timeSlot}
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#7d9094' }}>
-                      {needsCustomArea ? form.customArea : form.area}, {form.region} · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · ${total}
+                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · ${total}
                     </p>
                   </div>
                 )}
