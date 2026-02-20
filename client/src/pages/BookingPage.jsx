@@ -67,8 +67,8 @@ export default function BookingPage() {
     notes: '',
   })
 
-  const total = (form.seatCount * PRICE_PER_SEAT).toFixed(2)
-  const totalKsh = (form.seatCount * 700).toLocaleString()
+  const totalUSD = `$${(form.seatCount * PRICE_PER_SEAT).toFixed(2)}`
+  const totalKsh = `KSh ${(form.seatCount * 700).toLocaleString('en-US')}`
   const needsCustomArea = form.area === 'Other (write below)'
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
@@ -106,9 +106,9 @@ export default function BookingPage() {
         county: 'Nairobi',
         paymentMethod: 'pay_on_service',
         pricePerSeat: PRICE_PER_SEAT,
-        total,
+        total: totalUSD,
       })
-      navigate('/booking-success', { state: { booking: { ...res.data.booking, total } } })
+      navigate('/booking-success', { state: { booking: { ...res.data.booking, total: totalUSD } } })
     } catch (err) {
       navigate('/booking-success', {
         state: {
@@ -116,7 +116,7 @@ export default function BookingPage() {
             ...form,
             area: needsCustomArea ? form.customArea : form.area,
             county: 'Nairobi',
-            total,
+            total: totalUSD,
             id: 'demo-' + Date.now(),
           }
         }
@@ -170,7 +170,7 @@ export default function BookingPage() {
               {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × $5.30
             </span>
             <span className="font-bold text-lg" style={{ color: '#60665a' }}>
-              ${total} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ KSh {totalKsh}</span>
+              {totalUSD} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ {totalKsh}</span>
             </span>
           </div>
 
@@ -313,7 +313,7 @@ export default function BookingPage() {
                       📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {form.timeSlot}
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#7d9094' }}>
-                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · ${total}
+                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · {totalUSD}
                     </p>
                   </div>
                 )}
@@ -345,7 +345,7 @@ export default function BookingPage() {
                     ))}
                     <div className="flex justify-between pt-2 font-bold text-base" style={{ color: '#60665a' }}>
                       <span>Total</span>
-                      <span>${total} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ KSh {totalKsh}</span></span>
+                      <span>{totalUSD} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ {totalKsh}</span></span>
                     </div>
                   </div>
                 </div>
