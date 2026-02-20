@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import toast from 'react-hot-toast'
-import axios from 'axios'
+import api from '../lib/api'
 import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft } from 'lucide-react'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
@@ -100,7 +100,7 @@ export default function BookingPage() {
     setLoading(true)
     try {
       const locationLabel = needsCustomArea ? form.customArea : form.area
-      const res = await axios.post('/api/bookings', {
+      const res = await api.post('/bookings', {
         ...form,
         area: locationLabel,
         county: 'Nairobi',

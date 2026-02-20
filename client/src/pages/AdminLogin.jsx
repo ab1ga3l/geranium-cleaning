@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Flower, Eye, EyeOff, LogIn } from 'lucide-react'
-import axios from 'axios'
+import api from '../lib/api'
 import toast from 'react-hot-toast'
 
 export default function AdminLogin() {
@@ -16,7 +16,7 @@ export default function AdminLogin() {
     if (!email || !password) { toast.error('Enter email and password'); return }
     setLoading(true)
     try {
-      const res = await axios.post('/api/admin/login', { email, password })
+      const res = await api.post('/admin/login', { email, password })
       localStorage.setItem('admin_token', res.data.token)
       toast.success('Welcome, Patience!')
       navigate('/admin/dashboard')

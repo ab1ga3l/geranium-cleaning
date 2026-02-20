@@ -22,9 +22,11 @@ const TABS = [
 
 const STATUS_FILTERS = ['all', 'pending', 'accepted', 'completed', 'declined']
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
+
 function api(token) {
   return axios.create({
-    baseURL: '/api',
+    baseURL: API_BASE,
     headers: { Authorization: `Bearer ${token}` },
   })
 }
