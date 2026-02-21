@@ -13,12 +13,14 @@ export default function AdminLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    if (!email || !password) { toast.error('Enter email and password'); return }
+    const trimmedEmail = email.trim()
+    const trimmedPassword = password.trim()
+    if (!trimmedEmail || !trimmedPassword) { toast.error('Enter email and password'); return }
     setLoading(true)
     try {
-      const res = await api.post('/admin/login', { email, password })
+      const res = await api.post('/admin/login', { email: trimmedEmail, password: trimmedPassword })
       localStorage.setItem('admin_token', res.data.token)
-      toast.success('Welcome, Patience!')
+      toast.success('Welcome back!')
       navigate('/admin/dashboard')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed')
@@ -41,7 +43,7 @@ export default function AdminLogin() {
           <p className="text-sm mt-1" style={{ color: '#96aca0' }}>Geranium Cleaning Services</p>
         </div>
 
-        <form onSubmit={handleLogin} className="card shadow-2xl">
+        <form onSubmit={handleLogin} className="card shadow-2xl" style={{ pointerEvents: loading ? 'none' : 'auto' }}>
           <h2 className="font-bold text-xl mb-6 text-center" style={{ color: '#60665a' }}>Sign In</h2>
 
           <div className="space-y-4">

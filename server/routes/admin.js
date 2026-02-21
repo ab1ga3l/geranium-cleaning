@@ -4,9 +4,20 @@ const { requireAdmin, generateToken, validateCredentials } = require('../middlew
 const { getDb } = require('../config/firebase')
 const { sendBookingStatusUpdate } = require('../services/emailService')
 
+function roundCurrency(val) {
+  return Math.round(parseFloat(val || 0) * 100) / 100
+}
+
+function isValidDate(str) {
+  if (!str) return false
+  const d = new Date(str)
+  return !isNaN(d.getTime())
+}
+
 // POST /api/admin/login
 router.post('/login', (req, res) => {
-  const { email, password } = req.body
+  const email = (req.body.email || '').trim()
+  const password = (req.body.password || '').trim()
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password required' })
   }
@@ -17,11 +28,11 @@ router.post('/login', (req, res) => {
   res.json({ token, message: 'Login successful' })
 })
 
-// GET /api/admin/bookings — all bookings with optional filters
+// GET /api/admin/bookings — all bookings with optional filters + pagination
 router.get('/bookings', requireAdmin, async (req, res) => {
   try {
     const db = getDb()
-    const { status, from, to, search } = req.query
+    const { status, from, to, search, page, limit } = req.query
 
     let snapshot = await db.collection('bookings').get()
     let bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -31,17 +42,19 @@ router.get('/bookings', requireAdmin, async (req, res) => {
       bookings = bookings.filter(b => b.bookingStatus === status)
     }
 
-    // Filter by date range
-    if (from) {
-      bookings = bookings.filter(b => b.date && new Date(b.date) >= new Date(from))
+    // Filter by date range (validate dates first)
+    if (from && isValidDate(from)) {
+      const fromDate = new Date(from)
+      bookings = bookings.filter(b => b.date && new Date(b.date) >= fromDate)
     }
-    if (to) {
-      bookings = bookings.filter(b => b.date && new Date(b.date) <= new Date(to))
+    if (to && isValidDate(to)) {
+      const toDate = new Date(to)
+      bookings = bookings.filter(b => b.date && new Date(b.date) <= toDate)
     }
 
-    // Search by name/email/phone
+    // Search by name/email/phone/area
     if (search) {
-      const q = search.toLowerCase()
+      const q = search.toLowerCase().trim()
       bookings = bookings.filter(b =>
         b.name?.toLowerCase().includes(q) ||
         b.email?.toLowerCase().includes(q) ||
@@ -53,20 +66,15 @@ router.get('/bookings', requireAdmin, async (req, res) => {
     // Sort newest first
     bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-    // Stats
-    const stats = {
-      total: bookings.length,
-      pending: bookings.filter(b => b.bookingStatus === 'pending').length,
-      accepted: bookings.filter(b => b.bookingStatus === 'accepted').length,
-      completed: bookings.filter(b => b.bookingStatus === 'completed').length,
-      declined: bookings.filter(b => b.bookingStatus === 'declined').length,
-      revenue: bookings
-        .filter(b => b.paymentStatus === 'paid')
-        .reduce((sum, b) => sum + parseFloat(b.total || 0), 0)
-        .toFixed(2),
-    }
+    const total = bookings.length
 
-    res.json({ bookings, stats })
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 1000))
+    const pages = Math.max(1, Math.ceil(total / limitNum))
+    const paginated = limit ? bookings.slice((pageNum - 1) * limitNum, pageNum * limitNum) : bookings
+
+    res.json({ bookings: paginated, total, page: pageNum, pages })
   } catch (err) {
     console.error('[Admin GET /bookings]', err)
     res.status(500).json({ message: 'Server error' })
@@ -113,24 +121,29 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 
     const now = new Date()
-    const thisMonth = bookings.filter(b => {
+    // Filter once for this month
+    const thisMonthBookings = bookings.filter(b => {
       const d = new Date(b.createdAt)
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
     })
 
+    const totalRevenue = bookings
+      .filter(b => b.paymentStatus === 'paid')
+      .reduce((s, b) => s + roundCurrency(b.total), 0)
+
+    const monthRevenue = thisMonthBookings
+      .filter(b => b.paymentStatus === 'paid')
+      .reduce((s, b) => s + roundCurrency(b.total), 0)
+
     res.json({
       total: bookings.length,
-      thisMonth: thisMonth.length,
+      thisMonth: thisMonthBookings.length,
       pending: bookings.filter(b => b.bookingStatus === 'pending').length,
       accepted: bookings.filter(b => b.bookingStatus === 'accepted').length,
       completed: bookings.filter(b => b.bookingStatus === 'completed').length,
       declined: bookings.filter(b => b.bookingStatus === 'declined').length,
-      totalRevenue: bookings
-        .filter(b => b.paymentStatus === 'paid')
-        .reduce((s, b) => s + parseFloat(b.total || 0), 0).toFixed(2),
-      monthRevenue: thisMonth
-        .filter(b => b.paymentStatus === 'paid')
-        .reduce((s, b) => s + parseFloat(b.total || 0), 0).toFixed(2),
+      totalRevenue: (Math.round(totalRevenue * 100) / 100).toFixed(2),
+      monthRevenue: (Math.round(monthRevenue * 100) / 100).toFixed(2),
       totalSeats: bookings.reduce((s, b) => s + parseInt(b.seatCount || 0), 0),
     })
   } catch (err) {
@@ -139,7 +152,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
   }
 })
 
-// GET /api/admin/clients - unique clients
+// GET /api/admin/clients - unique clients with optional pagination
 router.get('/clients', requireAdmin, async (req, res) => {
   try {
     const db = getDb()
@@ -148,6 +161,7 @@ router.get('/clients', requireAdmin, async (req, res) => {
 
     const clientMap = {}
     bookings.forEach(b => {
+      if (!b.email) return
       if (!clientMap[b.email]) {
         clientMap[b.email] = {
           name: b.name, email: b.email, phone: b.phone,
@@ -156,7 +170,9 @@ router.get('/clients', requireAdmin, async (req, res) => {
         }
       }
       clientMap[b.email].bookings++
-      clientMap[b.email].totalSpent += parseFloat(b.total || 0)
+      clientMap[b.email].totalSpent = Math.round(
+        (clientMap[b.email].totalSpent + roundCurrency(b.total)) * 100
+      ) / 100
       if (!clientMap[b.email].lastBooking || new Date(b.createdAt) > new Date(clientMap[b.email].lastBooking)) {
         clientMap[b.email].lastBooking = b.createdAt
       }
