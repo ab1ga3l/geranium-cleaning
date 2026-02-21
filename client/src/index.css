@@ -108,6 +108,83 @@ body {
 ::-webkit-scrollbar-track { background: #fdf8f6; }
 ::-webkit-scrollbar-thumb { background: #c69491; border-radius: 3px; }
 
+/* Scroll-reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* Floating animation for hero card */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+.float-card {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Shimmer for pricing highlight */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, #c69491 0%, #f9c8c2 50%, #c69491 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Stat counter cards */
+.stat-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 20px rgba(198,148,145,0.10);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(198,148,145,0.18);
+}
+
+/* Service card hover lift */
+.service-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.service-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(198,148,145,0.18);
+}
+
+/* FAQ accordion */
+.faq-item {
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.faq-item:hover {
+  box-shadow: 0 4px 16px rgba(198,148,145,0.12);
+}
+
+/* Gradient badge */
+.badge-gradient {
+  background: linear-gradient(135deg, #f9c8c2, #c69491);
+  color: white;
+}
+
 /* React DatePicker overrides */
 .react-datepicker {
   font-family: var(--font-sans) !important;
