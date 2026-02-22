@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { requireAdmin, generateToken, validateCredentials } = require('../middleware/adminAuth')
 const { getDb } = require('../config/firebase')
-const { sendBookingStatusUpdate } = require('../services/emailService')
+const { sendBookingStatusUpdate, sendInvoiceEmail } = require('../services/emailService')
 
 function roundCurrency(val) {
   return Math.round(parseFloat(val || 0) * 100) / 100
@@ -101,9 +101,12 @@ router.patch('/bookings/:id/status', requireAdmin, async (req, res) => {
     const doc = await db.collection('bookings').doc(req.params.id).get()
     const booking = { id: doc.id, ...doc.data() }
 
-    // Email client on accept/decline
+    // Email client on accept/decline/complete
     if (status === 'accepted' || status === 'declined') {
       sendBookingStatusUpdate(booking, status).catch(console.warn)
+    }
+    if (status === 'completed') {
+      sendInvoiceEmail(booking).catch(console.warn)
     }
 
     res.json({ booking })

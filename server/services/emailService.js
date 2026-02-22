@@ -158,4 +158,65 @@ async function sendAdminNewBookingAlert(booking) {
   })
 }
 
-module.exports = { sendBookingConfirmation, sendBookingStatusUpdate, sendAdminNewBookingAlert }
+async function sendInvoiceEmail(booking) {
+  const dateStr = booking.date
+    ? new Date(booking.date).toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    : 'N/A'
+
+  const total = parseFloat(booking.total)
+  const totalDisplay = !isNaN(total) ? `KSh ${total.toLocaleString('en-KE')}` : `KSh ${booking.total}`
+
+  const content = `
+    <h2 style="color:${DARK};margin:0 0 8px;">Service Complete! Here's Your Invoice 🧾</h2>
+    <p style="color:#7d9094;margin:0 0 24px;">Hi <strong>${booking.name}</strong>, your seat cleaning is done. Thank you for choosing us!</p>
+
+    <div style="background:#fef5f3;border-radius:14px;padding:24px;margin-bottom:24px;border:1.5px solid #f9c8c2;">
+      <h3 style="color:${DARK};margin:0 0 16px;font-size:15px;">Invoice Summary</h3>
+      ${[
+        ['Booking ID', `#${booking.id?.slice(-8).toUpperCase() || 'GCS-XXXX'}`],
+        ['Date & Time', `${dateStr} at ${booking.timeSlot || 'N/A'}`],
+        ['Location', [booking.address, booking.area, booking.county].filter(Boolean).join(', ')],
+        ['Seat Type', booking.seatType || 'N/A'],
+        ['Seats Cleaned', `${booking.seatCount} seat${booking.seatCount > 1 ? 's' : ''}`],
+        ['Payment Method', 'Pay on Service (Cash)'],
+        ['Amount Due', totalDisplay],
+      ].map(([label, value]) => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e8e6;font-size:14px;">
+          <span style="color:#96aca0;">${label}</span>
+          <span style="color:${DARK};font-weight:600;">${value}</span>
+        </div>
+      `).join('')}
+      <div style="display:flex;justify-content:space-between;padding:12px 0 0;font-size:16px;font-weight:700;">
+        <span style="color:${DARK};">Total</span>
+        <span style="color:${BRAND_COLOR};">${totalDisplay}</span>
+      </div>
+    </div>
+
+    <div style="background:#f9c8c2;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0;color:${DARK};font-size:14px;">
+        🌸 Thank you for using Geranium Cleaning Services!<br>
+        We hope to see you again soon.
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${process.env.CLIENT_URL || 'https://geranium-cleaning.vercel.app'}/book"
+        style="background:${BRAND_COLOR};color:white;padding:12px 28px;border-radius:30px;text-decoration:none;font-weight:600;font-size:14px;">
+        Book Again
+      </a>
+    </div>
+
+    <p style="color:#7d9094;font-size:13px;margin:0;">
+      Questions? Call <a href="tel:+254726390610" style="color:${BRAND_COLOR};font-weight:600;">+254 726 390610</a> or reply to this email.
+    </p>
+  `
+
+  await transporter.sendMail({
+    from: `"Geranium Cleaning 🌸" <${process.env.SMTP_USER}>`,
+    to: booking.email,
+    subject: `🧾 Service Complete – Invoice · Geranium Cleaning`,
+    html: baseTemplate(content),
+  })
+}
+
+module.exports = { sendBookingConfirmation, sendBookingStatusUpdate, sendAdminNewBookingAlert, sendInvoiceEmail }

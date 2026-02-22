@@ -46,7 +46,7 @@ const STEPS = ['Details', 'Schedule', 'Confirm']
 
 const TIME_SLOTS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM']
 
-const PRICE_PER_SEAT = 5.30
+const PRICE_PER_SEAT_KSH = 700
 
 export default function BookingPage() {
   const navigate = useNavigate()
@@ -67,8 +67,8 @@ export default function BookingPage() {
     notes: '',
   })
 
-  const totalUSD = `$${(form.seatCount * PRICE_PER_SEAT).toFixed(2)}`
-  const totalKsh = `KSh ${(form.seatCount * 700).toLocaleString('en-US')}`
+  const totalKsh = form.seatCount * PRICE_PER_SEAT_KSH
+  const totalKshStr = `KSh ${totalKsh.toLocaleString('en-KE')}`
   const needsCustomArea = form.area === 'Other (write below)'
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
@@ -105,10 +105,10 @@ export default function BookingPage() {
         area: locationLabel,
         county: 'Nairobi',
         paymentMethod: 'pay_on_service',
-        pricePerSeat: PRICE_PER_SEAT,
-        total: totalUSD,
+        pricePerSeat: PRICE_PER_SEAT_KSH,
+        total: totalKsh,
       })
-      navigate('/booking-success', { state: { booking: { ...res.data.booking, total: totalUSD } } })
+      navigate('/booking-success', { state: { booking: { ...res.data.booking, total: totalKsh } } })
     } catch (err) {
       navigate('/booking-success', {
         state: {
@@ -116,7 +116,7 @@ export default function BookingPage() {
             ...form,
             area: needsCustomArea ? form.customArea : form.area,
             county: 'Nairobi',
-            total: totalUSD,
+            total: totalKsh,
             id: 'demo-' + Date.now(),
           }
         }
@@ -167,10 +167,10 @@ export default function BookingPage() {
           <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-6"
             style={{ backgroundColor: '#f9c8c2' }}>
             <span className="text-sm font-medium" style={{ color: '#60665a' }}>
-              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × $5.30
+              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × KSh {PRICE_PER_SEAT_KSH.toLocaleString('en-KE')}
             </span>
             <span className="font-bold text-lg" style={{ color: '#60665a' }}>
-              {totalUSD} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ {totalKsh}</span>
+              {totalKshStr}
             </span>
           </div>
 
@@ -290,7 +290,7 @@ export default function BookingPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-3" style={{ color: '#60665a' }}>Select Time Slot *</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {TIME_SLOTS.map(slot => (
                       <button key={slot} type="button"
                         onClick={() => set('timeSlot', slot)}
@@ -313,7 +313,7 @@ export default function BookingPage() {
                       📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {form.timeSlot}
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#7d9094' }}>
-                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · {totalUSD}
+                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · {totalKshStr}
                     </p>
                   </div>
                 )}
@@ -345,7 +345,7 @@ export default function BookingPage() {
                     ))}
                     <div className="flex justify-between pt-2 font-bold text-base" style={{ color: '#60665a' }}>
                       <span>Total</span>
-                      <span>{totalUSD} <span className="text-sm font-normal" style={{ color: '#96aca0' }}>≈ {totalKsh}</span></span>
+                      <span>{totalKshStr}</span>
                     </div>
                   </div>
                 </div>
