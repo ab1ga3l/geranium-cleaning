@@ -8,7 +8,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       name, email, phone, county, area, address,
-      seatType, seatCount, date, timeSlot, notes,
+      serviceType, seatType, seatCount, date, timeSlot, notes,
       paymentMethod, paymentIntentId, total, status,
     } = req.body
 
@@ -25,6 +25,7 @@ router.post('/', async (req, res) => {
       county,
       area,
       address: address?.trim(),
+      serviceType: serviceType || 'seats',
       seatType,
       seatCount: parseInt(seatCount),
       date: date ? new Date(date).toISOString() : null,

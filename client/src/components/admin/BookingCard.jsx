@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { CheckCircle, XCircle, Clock, MapPin, Calendar, Phone, Mail, ChevronDown, ChevronUp, User, Copy } from 'lucide-react'
 
+const SERVICE_LABELS = {
+  seats: '🪑 Seats',
+  mattress: '🛏️ Mattress',
+  bedframe: '🪵 Bed Frame',
+}
+
 const STATUS_ICONS = {
   pending: <Clock size={14} />,
   accepted: <CheckCircle size={14} />,
@@ -81,6 +87,12 @@ export default function BookingCard({ booking: b, onStatusChange, statusColor, e
                 style={{ backgroundColor: paymentStyle.bg, color: paymentStyle.color }}>
                 {paymentStyle.label}
               </span>
+              {b.serviceType && b.serviceType !== 'seats' && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ backgroundColor: '#f0f4f2', color: '#60665a' }}>
+                  {SERVICE_LABELS[b.serviceType] || b.serviceType}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-1 text-xs flex-wrap" style={{ color: '#96aca0' }}>
               <span className="flex items-center gap-1"><Calendar size={11} />{dateStr} {b.timeSlot && `· ${b.timeSlot}`}</span>
@@ -151,7 +163,7 @@ export default function BookingCard({ booking: b, onStatusChange, statusColor, e
             </div>
             <div className="flex items-center gap-2" style={{ color: '#60665a' }}>
               <User size={14} style={{ color: '#96aca0' }} />
-              {b.seatType || 'N/A'} · {b.seatCount} seat{b.seatCount > 1 ? 's' : ''}
+              {b.seatType || 'N/A'} · {b.seatCount} {b.serviceType === 'mattress' ? 'mattress' : b.serviceType === 'bedframe' ? 'frame' : 'seat'}{b.seatCount > 1 ? 's' : ''}
             </div>
           </div>
 

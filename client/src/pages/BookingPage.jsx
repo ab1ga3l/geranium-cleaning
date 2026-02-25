@@ -8,45 +8,57 @@ import { Calendar, MapPin, User, Mail, Phone, ChevronRight, ChevronLeft } from '
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
 const SEAT_TYPES = ['Car Seats', 'Office Chairs', 'Dining Chairs', 'Sofa / Couch', 'Mixed']
 
-// Nairobi areas grouped
-const NAIROBI_AREAS = [
-  'CBD / City Centre',
-  'Westlands',
-  'Karen',
-  'Kilimani',
-  'Lavington',
-  'Parklands',
-  'Upperhill',
-  'Gigiri',
-  'Runda',
-  'Muthaiga',
-  'Hurlingham',
-  'South B / South C',
-  'Langata',
-  'Kibera',
-  'Kasarani',
-  'Roysambu',
-  'Ruaraka',
-  'Eastleigh',
-  'Buruburu',
-  'Embakasi',
-  'Donholm',
-  'Umoja',
-  'Thika Road (TRM)',
-  'Thika Road (Garden City)',
-  'Thika Road (Mirema)',
-  'Thika Road (Kahawa)',
-  'Thika Road (Githurai)',
-  'Other (write below)',
+const MATTRESS_SIZES = [
+  { label: 'Single', price: 1500 },
+  { label: 'Double', price: 2000 },
+  { label: 'King', price: 2500 },
 ]
 
-const STEPS = ['Details', 'Schedule', 'Confirm']
+const FRAME_PRICE = 800
+
+const NAIROBI_AREAS = [
+  'CBD / City Centre', 'Westlands', 'Karen', 'Kilimani', 'Lavington', 'Parklands',
+  'Upperhill', 'Gigiri', 'Runda', 'Muthaiga', 'Hurlingham', 'South B / South C',
+  'Langata', 'Kibera', 'Kasarani', 'Roysambu', 'Ruaraka', 'Eastleigh', 'Buruburu',
+  'Embakasi', 'Donholm', 'Umoja', 'Thika Road (TRM)', 'Thika Road (Garden City)',
+  'Thika Road (Mirema)', 'Thika Road (Kahawa)', 'Thika Road (Githurai)',
+  'Kahawa Sukari', 'Kahawa Wendani', 'Ruiru', 'Waiyaki Way', 'Garden Estate',
+  'Lower Kabete', 'Rongai', 'Ngong', 'Other (write below)',
+]
+
+const STEPS = ['Service', 'Details', 'Schedule', 'Confirm']
 
 const TIME_SLOTS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM']
 
-const PRICE_PER_SEAT_KSH = 700
+const SERVICE_OPTIONS = [
+  {
+    id: 'seats',
+    icon: '🪑',
+    title: 'Seat Cleaning',
+    desc: 'Car seats, office chairs, dining chairs, sofas & couches',
+    price: 'KSh 700 / seat',
+  },
+  {
+    id: 'mattress',
+    icon: '🛏️',
+    title: 'Mattress Cleaning',
+    desc: 'Deep clean — dust mites, stains & allergens removed',
+    price: 'From KSh 1,500',
+  },
+  {
+    id: 'bedframe',
+    icon: '🪵',
+    title: 'Bed Frame Cleaning',
+    desc: 'Bedroom headboard & side bed frames cleaned & refreshed',
+    price: 'KSh 800 / frame',
+  },
+]
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BookingPage() {
   const navigate = useNavigate()
@@ -54,37 +66,81 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(false)
 
   const [form, setForm] = useState({
+    serviceType: '',      // 'seats' | 'mattress' | 'bedframe'
+    // Seat-specific
+    seatType: '',
+    seatCount: 1,
+    // Mattress-specific
+    mattressSize: '',     // 'Single' | 'Double' | 'King'
+    mattressCount: 1,
+    // Bed frame-specific
+    frameCount: 1,
+    frameSize: 'Double',
+    // Common
     name: '',
     email: '',
     phone: '',
     area: '',
     customArea: '',
     address: '',
-    seatType: '',
-    seatCount: 1,
     date: null,
     timeSlot: '',
     notes: '',
   })
 
-  const totalKsh = form.seatCount * PRICE_PER_SEAT_KSH
-  const totalKshStr = `KSh ${totalKsh.toLocaleString('en-KE')}`
-  const needsCustomArea = form.area === 'Other (write below)'
-
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
+  const needsCustomArea = form.area === 'Other (write below)'
+
+  // ── Pricing ────────────────────────────────────────────────────────────────
+  const getTotal = () => {
+    if (form.serviceType === 'seats') return form.seatCount * 700
+    if (form.serviceType === 'mattress') {
+      const m = MATTRESS_SIZES.find(s => s.label === form.mattressSize)
+      return (m?.price || 0) * form.mattressCount
+    }
+    if (form.serviceType === 'bedframe') return form.frameCount * FRAME_PRICE
+    return 0
+  }
+
+  const totalKsh = getTotal()
+  const totalKshStr = totalKsh > 0 ? `KSh ${totalKsh.toLocaleString('en-KE')}` : '—'
+
+  const getPriceLine = () => {
+    if (form.serviceType === 'seats') return `${form.seatCount} seat${form.seatCount > 1 ? 's' : ''} × KSh 700`
+    if (form.serviceType === 'mattress') {
+      const m = MATTRESS_SIZES.find(s => s.label === form.mattressSize)
+      if (!m) return `${form.mattressCount} mattress${form.mattressCount > 1 ? 'es' : ''}`
+      return `${form.mattressCount} ${m.label} mattress${form.mattressCount > 1 ? 'es' : ''} × KSh ${m.price.toLocaleString('en-KE')}`
+    }
+    if (form.serviceType === 'bedframe') return `${form.frameCount} frame${form.frameCount > 1 ? 's' : ''} × KSh ${FRAME_PRICE}`
+    return ''
+  }
+
+  const getServiceLabel = () => {
+    const s = SERVICE_OPTIONS.find(s => s.id === form.serviceType)
+    return s ? `${s.icon} ${s.title}` : ''
+  }
+
+  // ── Validation ────────────────────────────────────────────────────────────
   const validateStep0 = () => {
+    if (!form.serviceType) { toast.error('Please select a service'); return false }
+    return true
+  }
+
+  const validateStep1 = () => {
     if (!form.name.trim()) { toast.error('Please enter your name'); return false }
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) { toast.error('Please enter a valid email'); return false }
     if (!form.phone.trim()) { toast.error('Please enter your phone number'); return false }
     if (!form.area) { toast.error('Please select your area'); return false }
     if (needsCustomArea && !form.customArea.trim()) { toast.error('Please describe your location'); return false }
     if (!form.address.trim()) { toast.error('Please enter your address'); return false }
-    if (!form.seatType) { toast.error('Please select seat type'); return false }
+    if (form.serviceType === 'seats' && !form.seatType) { toast.error('Please select seat type'); return false }
+    if (form.serviceType === 'mattress' && !form.mattressSize) { toast.error('Please select mattress size'); return false }
     return true
   }
 
-  const validateStep1 = () => {
+  const validateStep2 = () => {
     if (!form.date) { toast.error('Please select a date'); return false }
     if (!form.timeSlot) { toast.error('Please select a time slot'); return false }
     return true
@@ -93,6 +149,7 @@ export default function BookingPage() {
   const handleNext = () => {
     if (step === 0 && !validateStep0()) return
     if (step === 1 && !validateStep1()) return
+    if (step === 2 && !validateStep2()) return
     setStep(s => s + 1)
   }
 
@@ -100,12 +157,31 @@ export default function BookingPage() {
     setLoading(true)
     try {
       const locationLabel = needsCustomArea ? form.customArea : form.area
+      // Build item description for different service types
+      let seatType = form.seatType
+      let seatCount = form.seatCount
+      if (form.serviceType === 'mattress') {
+        seatType = `Mattress (${form.mattressSize})`
+        seatCount = form.mattressCount
+      } else if (form.serviceType === 'bedframe') {
+        seatType = `Bed Frame (${form.frameSize})`
+        seatCount = form.frameCount
+      }
+
       const res = await api.post('/bookings', {
-        ...form,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
         area: locationLabel,
+        address: form.address,
         county: 'Nairobi',
+        serviceType: form.serviceType,
+        seatType,
+        seatCount,
+        date: form.date,
+        timeSlot: form.timeSlot,
+        notes: form.notes,
         paymentMethod: 'pay_on_service',
-        pricePerSeat: PRICE_PER_SEAT_KSH,
         total: totalKsh,
       })
       navigate('/booking-success', { state: { booking: { ...res.data.booking, total: totalKsh } } })
@@ -126,7 +202,7 @@ export default function BookingPage() {
     }
   }
 
-  const filterDate = (date) => date.getDay() !== 0 // no Sundays
+  const filterDate = (date) => date.getDay() !== 0
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#fdf8f6' }}>
@@ -156,31 +232,176 @@ export default function BookingPage() {
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className="w-16 sm:w-24 h-0.5 mx-2 mb-5 transition-all"
+                  <div className="w-12 sm:w-16 h-0.5 mx-2 mb-5 transition-all"
                     style={{ backgroundColor: i < step ? '#c69491' : '#e8d5d2' }} />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Price banner */}
-          <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-6"
-            style={{ backgroundColor: '#f9c8c2' }}>
-            <span className="text-sm font-medium" style={{ color: '#60665a' }}>
-              {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} × KSh {PRICE_PER_SEAT_KSH.toLocaleString('en-KE')}
-            </span>
-            <span className="font-bold text-lg" style={{ color: '#60665a' }}>
-              {totalKshStr}
-            </span>
-          </div>
+          {/* Price banner — only show once service selected */}
+          {form.serviceType && step > 0 && (
+            <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-6"
+              style={{ backgroundColor: '#f9c8c2' }}>
+              <span className="text-sm font-medium" style={{ color: '#60665a' }}>
+                {getPriceLine()}
+              </span>
+              <span className="font-bold text-lg" style={{ color: '#60665a' }}>
+                {totalKshStr}
+              </span>
+            </div>
+          )}
 
           <div className="card shadow-xl">
 
-            {/* ── STEP 0: Details ── */}
+            {/* ── STEP 0: Choose Service ── */}
             {step === 0 && (
+              <div>
+                <h2 className="font-bold text-xl mb-6" style={{ color: '#60665a' }}>What would you like cleaned?</h2>
+                <div className="space-y-3">
+                  {SERVICE_OPTIONS.map(svc => (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      onClick={() => set('serviceType', svc.id)}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all"
+                      style={{
+                        borderColor: form.serviceType === svc.id ? '#c69491' : '#e8d5d2',
+                        backgroundColor: form.serviceType === svc.id ? '#fef5f3' : 'white',
+                        cursor: 'pointer',
+                      }}>
+                      <div className="text-4xl flex-shrink-0">{svc.icon}</div>
+                      <div className="flex-1">
+                        <p className="font-bold text-base" style={{ color: '#60665a' }}>{svc.title}</p>
+                        <p className="text-sm mt-0.5" style={{ color: '#7d9094' }}>{svc.desc}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className="font-bold text-sm" style={{ color: '#c69491' }}>{svc.price}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 1: Details ── */}
+            {step === 1 && (
               <div className="space-y-5">
                 <h2 className="font-bold text-xl mb-6" style={{ color: '#60665a' }}>Your Details</h2>
 
+                {/* Service-specific item picker */}
+                {form.serviceType === 'seats' && (
+                  <div className="p-4 rounded-2xl border" style={{ backgroundColor: '#fef5f3', borderColor: '#f9c8c2' }}>
+                    <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>🪑 Seat Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Seat Type *</label>
+                        <select className="input-field" value={form.seatType} onChange={e => set('seatType', e.target.value)}>
+                          <option value="">Select type…</option>
+                          {SEAT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Number of Seats *</label>
+                        <div className="flex items-center gap-3">
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('seatCount', Math.max(1, form.seatCount - 1))}>−</button>
+                          <span className="font-bold text-xl w-8 text-center" style={{ color: '#60665a' }}>{form.seatCount}</span>
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('seatCount', Math.min(50, form.seatCount + 1))}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {form.serviceType === 'mattress' && (
+                  <div className="p-4 rounded-2xl border" style={{ backgroundColor: '#fef5f3', borderColor: '#f9c8c2' }}>
+                    <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>🛏️ Mattress Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: '#60665a' }}>Mattress Size *</label>
+                        <div className="space-y-2">
+                          {MATTRESS_SIZES.map(({ label, price }) => (
+                            <button key={label} type="button"
+                              onClick={() => set('mattressSize', label)}
+                              className="w-full flex justify-between items-center px-3 py-2.5 rounded-xl border text-sm font-medium transition-all"
+                              style={{
+                                borderColor: form.mattressSize === label ? '#c69491' : '#e8d5d2',
+                                backgroundColor: form.mattressSize === label ? '#c69491' : 'white',
+                                color: form.mattressSize === label ? 'white' : '#60665a',
+                                cursor: 'pointer',
+                              }}>
+                              <span>{label}</span>
+                              <span>KSh {price.toLocaleString('en-KE')}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Number of Mattresses *</label>
+                        <div className="flex items-center gap-3">
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('mattressCount', Math.max(1, form.mattressCount - 1))}>−</button>
+                          <span className="font-bold text-xl w-8 text-center" style={{ color: '#60665a' }}>{form.mattressCount}</span>
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('mattressCount', Math.min(10, form.mattressCount + 1))}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {form.serviceType === 'bedframe' && (
+                  <div className="p-4 rounded-2xl border" style={{ backgroundColor: '#fef5f3', borderColor: '#f9c8c2' }}>
+                    <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>🪵 Bed Frame Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: '#60665a' }}>Frame Size</label>
+                        <div className="space-y-2">
+                          {['Single', 'Double', 'King'].map(size => (
+                            <button key={size} type="button"
+                              onClick={() => set('frameSize', size)}
+                              className="w-full flex justify-between items-center px-3 py-2.5 rounded-xl border text-sm font-medium transition-all"
+                              style={{
+                                borderColor: form.frameSize === size ? '#c69491' : '#e8d5d2',
+                                backgroundColor: form.frameSize === size ? '#c69491' : 'white',
+                                color: form.frameSize === size ? 'white' : '#60665a',
+                                cursor: 'pointer',
+                              }}>
+                              <span>{size}</span>
+                              <span>KSh {FRAME_PRICE.toLocaleString('en-KE')}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Number of Frames *</label>
+                        <div className="flex items-center gap-3">
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('frameCount', Math.max(1, form.frameCount - 1))}>−</button>
+                          <span className="font-bold text-xl w-8 text-center" style={{ color: '#60665a' }}>{form.frameCount}</span>
+                          <button type="button"
+                            className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
+                            style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
+                            onClick={() => set('frameCount', Math.min(10, form.frameCount + 1))}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact info */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
                     <User size={14} className="inline mr-1" />Full Name *
@@ -224,7 +445,6 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Custom area input if "Other" selected */}
                 {needsCustomArea && (
                   <div>
                     <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
@@ -234,30 +454,6 @@ export default function BookingPage() {
                       value={form.customArea} onChange={e => set('customArea', e.target.value)} />
                   </div>
                 )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Seat Type *</label>
-                    <select className="input-field" value={form.seatType} onChange={e => set('seatType', e.target.value)}>
-                      <option value="">Select type…</option>
-                      {SEAT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>Number of Seats *</label>
-                    <div className="flex items-center gap-3">
-                      <button type="button"
-                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
-                        style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
-                        onClick={() => set('seatCount', Math.max(1, form.seatCount - 1))}>−</button>
-                      <span className="font-bold text-xl w-8 text-center" style={{ color: '#60665a' }}>{form.seatCount}</span>
-                      <button type="button"
-                        className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center"
-                        style={{ backgroundColor: '#f9c8c2', color: '#c69491', border: 'none', cursor: 'pointer' }}
-                        onClick={() => set('seatCount', Math.min(50, form.seatCount + 1))}>+</button>
-                    </div>
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: '#60665a' }}>
@@ -270,8 +466,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* ── STEP 1: Schedule ── */}
-            {step === 1 && (
+            {/* ── STEP 2: Schedule ── */}
+            {step === 2 && (
               <div className="space-y-6">
                 <h2 className="font-bold text-xl mb-6" style={{ color: '#60665a' }}>Schedule Your Visit</h2>
 
@@ -313,15 +509,15 @@ export default function BookingPage() {
                       📅 {form.date.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at {form.timeSlot}
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#7d9094' }}>
-                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {form.seatCount} seat{form.seatCount > 1 ? 's' : ''} · {totalKshStr}
+                      {needsCustomArea ? form.customArea : form.area}, Nairobi · {getPriceLine()} · {totalKshStr}
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── STEP 2: Confirm ── */}
-            {step === 2 && (
+            {/* ── STEP 3: Confirm ── */}
+            {step === 3 && (
               <div className="space-y-5">
                 <h2 className="font-bold text-xl mb-2" style={{ color: '#60665a' }}>Confirm Booking</h2>
 
@@ -329,14 +525,14 @@ export default function BookingPage() {
                   <h3 className="font-semibold text-sm mb-3" style={{ color: '#60665a' }}>Booking Summary</h3>
                   <div className="space-y-2 text-sm" style={{ color: '#7d9094' }}>
                     {[
-                      ['Geranium', form.name],
+                      ['Service', getServiceLabel()],
+                      ['Name', form.name],
                       ['Email', form.email],
                       ['Phone', form.phone],
-                      ['Location', `${needsCustomArea ? form.customArea : form.area}, ${form.region}`],
+                      ['Location', `${needsCustomArea ? form.customArea : form.area}, Nairobi`],
                       ['Address', form.address],
                       ['Date & Time', `${form.date?.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' })} · ${form.timeSlot}`],
-                      ['Seat Type', form.seatType],
-                      ['Seats', `${form.seatCount} seat${form.seatCount > 1 ? 's' : ''}`],
+                      ['Items', getPriceLine()],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between py-1.5 border-b" style={{ borderColor: '#f0e8e6' }}>
                         <span>{label}</span>
@@ -350,7 +546,6 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Payment note */}
                 <div className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: '#f0f4f2', borderColor: '#c8dcd4' }}>
                   <span className="text-xl">💳</span>
                   <div>
@@ -388,7 +583,7 @@ export default function BookingPage() {
                 style={{ color: '#7d9094', backgroundColor: '#f5f0ef', border: 'none', cursor: 'pointer' }}>
                 <ChevronLeft size={16} /> Back
               </button>
-              {step < 2 && (
+              {step < 3 && (
                 <button onClick={handleNext} className="btn-primary flex items-center gap-2">
                   Continue <ChevronRight size={16} />
                 </button>
